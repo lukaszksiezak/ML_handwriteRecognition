@@ -21,11 +21,15 @@ def img_title(correct_val, pred_val):
 
 
 def display_image(data, title):
-    arr_data = np.array(data)
-    arr_data = np.reshape(arr_data, (20, 20))
-    plt.imshow(mirror_arr(arr_data), cmap='gray')
+    plt.imshow(data, cmap='gray')
     plt.title(title)
     plt.show()
+
+
+def prep_data_to_disp(data):
+    arr_data = np.array(data)
+    arr_data = np.reshape(arr_data, (20, 20))
+    return mirror_arr(arr_data)
 
 
 if __name__ == "__main__":
@@ -43,6 +47,4 @@ if __name__ == "__main__":
     for i in mixed_indices:
         predicted = 0  # TODO
         correct = y[i]
-        title = img_title(correct, predicted)
-        display_image(X[i], title)  # randomly choose picture
-
+        display_image(prep_data_to_disp(X[i]), img_title(correct, predicted))
