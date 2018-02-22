@@ -11,10 +11,20 @@ def mirror_arr(arr_data):
     return arr_data
 
 
-def display_image(data):
+def img_title(correct_val, pred_val):
+    correct_val = correct_val[0]
+
+    if correct_val == 10:
+        correct_val = 0
+
+    return "Correct val:%s; Predicted val:%s" % (correct_val, pred_val)
+
+
+def display_image(data, title):
     arr_data = np.array(data)
     arr_data = np.reshape(arr_data, (20, 20))
     plt.imshow(mirror_arr(arr_data), cmap='gray')
+    plt.title(title)
     plt.show()
 
 
@@ -31,5 +41,8 @@ if __name__ == "__main__":
     mixed_indices = np.random.permutation(len(X))
 
     for i in mixed_indices:
-        display_image(X[i])  # randomly choose picture
+        predicted = 0  # TODO
+        correct = y[i]
+        title = img_title(correct, predicted)
+        display_image(X[i], title)  # randomly choose picture
 
