@@ -22,8 +22,8 @@ def _next_image(Xtrain, Ytrain, idx):
 def learn_nn_network(X_train, X_test, y_train, y_test, batches):
 
     # Parameters
-    learning_rate = 0.1
-    n_hidden_1 = 16  # 1st layer number of neurons
+    learning_rate = 0.01
+    n_hidden_1 = 25  # 1st layer number of neurons
 
     num_input = 400
     num_classes = 10  # total classes (0-9 digits)
@@ -74,10 +74,15 @@ def learn_nn_network(X_train, X_test, y_train, y_test, batches):
             sess.run(train_op, feed_dict={
                 X: batch_x_train, Y: batch_y_train})
 
-        batch_x_test = np.array(X_test).reshape(2000, 400)
-        batch_y_test = np.array(y_test).reshape(2000, 10)
+        batch_x_test = np.array(X_test).reshape(1000, 400)
+        batch_y_test = np.array(y_test).reshape(1000, 10)
         print(sess.run(
             accuracy, feed_dict={X: batch_x_test, Y: batch_y_test}))
+        
+        saver = tf.train.Saver()
+        save_path = saver.save(sess, "/model/model.ckpt")
+        print("Model saved in file: %s" % save_path)
+
     return sess
 
 
@@ -120,18 +125,25 @@ if __name__ == "__main__":
 
     # split test data into training & test set
     X_train, X_test, y_train, _y_test = train_test_split(
-        X, y, test_size=0.4, random_state=1)
+        X, y, test_size=0.2, random_state=1)
 
-    y_test = np.zeros((2000, 10), dtype=int)
+    y_test = np.zeros((1000, 10), dtype=int)
     for i in range(0, len(y_test)):
         y_test[i] = _prepare_test_labels(_y_test[i][0])
     
     mixed_indices = np.random.permutation(len(X))
-    number_of_batches = 3000  # 60% of total (5000)
+    number_of_batches = 4000  # 60% of total (5000)
     model = learn_nn_network(
         X_train, X_test, y_train, y_test, number_of_batches)
+    
 
+    tf.reset_default_graph()    
+    saver = tf.train.import_meta_graph("/model/model.ckpt.meta")
+    with tf.Session() as sess:
+        saver.restore(sess,  tf.train.latest_checkpoint('/model/'))
+        print("Model restored.")
     # model verification against picture (demo purposes TODO)
+        # output = sess.run(nn_output , feed_dict={ x: batch_x, keep_prob: 0.8 }
     # for i in mixed_indices:
     #     predicted = 0  # TODO
     #     correct = y[i]
