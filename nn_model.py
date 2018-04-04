@@ -19,6 +19,12 @@ def _next_image(Xtrain, Ytrain, idx):
     return im, lbl_container.reshape(1, 10)
 
 
+def neural_net(x, weights, biases):
+    layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
+    out_layer = tf.matmul(layer_1, weights['out']) + biases['out']
+    return out_layer
+
+
 def learn_nn_network(X_train, X_test, y_train, y_test, batches):
 
     # Parameters
@@ -32,20 +38,17 @@ def learn_nn_network(X_train, X_test, y_train, y_test, batches):
     Y = tf.placeholder("float", [None, num_classes])
 
     weights = {
-        'h1': tf.Variable(tf.random_normal([num_input, n_hidden_1])),
-        'out': tf.Variable(tf.random_normal([n_hidden_1, num_classes]))
+        'h1': tf.Variable(
+            tf.random_normal([num_input, n_hidden_1]), name="theta1"),
+        'out': tf.Variable(
+            tf.random_normal([n_hidden_1, num_classes]), name="theta2")
     }
     biases = {
-        'b1': tf.Variable(tf.random_normal([n_hidden_1])),
-        'out': tf.Variable(tf.random_normal([num_classes]))
+        'b1': tf.Variable(tf.random_normal([n_hidden_1]), name="b1"),
+        'out': tf.Variable(tf.random_normal([num_classes]), name="b2")
     }
 
-    def neural_net(x):
-        layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
-        out_layer = tf.matmul(layer_1, weights['out']) + biases['out']
-        return out_layer
-
-    logits = neural_net(X)
+    logits = neural_net(X, weights, biases)
     prediction = tf.nn.softmax(logits)
 
     # Define loss and optimizer
@@ -78,7 +81,7 @@ def learn_nn_network(X_train, X_test, y_train, y_test, batches):
         batch_y_test = np.array(y_test).reshape(1000, 10)
         print(sess.run(
             accuracy, feed_dict={X: batch_x_test, Y: batch_y_test}))
-        
+
         saver = tf.train.Saver()
         save_path = saver.save(sess, "/model/model.ckpt")
         print("Model saved in file: %s" % save_path)
@@ -130,22 +133,42 @@ if __name__ == "__main__":
     y_test = np.zeros((1000, 10), dtype=int)
     for i in range(0, len(y_test)):
         y_test[i] = _prepare_test_labels(_y_test[i][0])
-    
+
     mixed_indices = np.random.permutation(len(X))
     number_of_batches = 4000  # 60% of total (5000)
     model = learn_nn_network(
         X_train, X_test, y_train, y_test, number_of_batches)
-    
 
-    tf.reset_default_graph()    
+    tf.reset_default_graph()
     saver = tf.train.import_meta_graph("/model/model.ckpt.meta")
+    init_op = tf.global_variables_initializer()
+
     with tf.Session() as sess:
+        sess.run(init_op)
         saver.restore(sess,  tf.train.latest_checkpoint('/model/'))
-        print("Model restored.")
-    # model verification against picture (demo purposes TODO)
-        # output = sess.run(nn_output , feed_dict={ x: batch_x, keep_prob: 0.8 }
-    # for i in mixed_indices:
-    #     predicted = 0  # TODO
-    #     correct = y[i]
+        graph = tf.get_default_graph()
+        theta1 = graph.get_tensor_by_name("theta1:0")
+        theta2 = graph.get_tensor_by_name("theta2:0")
+        b1 = graph.get_tensor_by_name("b1:0")
+        b2 = graph.get_tensor_by_name("b2:0")
+
+        weights = {
+            'h1': tf.Variable(theta1),
+            'out': tf.Variable(theta2)
+        }
+        biases = {
+            'b1': tf.Variable(b1),
+            'out': tf.Variable(b2)
+        }
+
+        print("Model restored.") 
+        for i in mixed_indices:
+            Xi = np.array(X[i][:]).reshape(1, 400)
+            logits = neural_net(np.float32(Xi), weights, biases)
+            prediction = tf.nn.softmax(logits)
+            correct_pred = tf.argmax(prediction, 1)
+            print(correct_pred.eval(sess))
+            correct = y[i]
+            break
     #     display_image(prep_data_to_disp(X[i]), img_title(correct, predicted))
 
