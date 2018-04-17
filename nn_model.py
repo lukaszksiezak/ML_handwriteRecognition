@@ -63,13 +63,12 @@ def learn_nn_network(X_train, X_test, y_train, y_test, batches):
 
     # Initialize the variables (i.e. assign their default value)
     init_op = tf.global_variables_initializer()
-
+    
     perm = np.arange(batches)
     np.random.shuffle(perm)
 
     with tf.Session() as sess:
         sess.run(init_op)
-
         for i in range(batches):
             batch_x_train, batch_y_train = _next_image(
                 X_train, y_train, perm[i])
@@ -141,10 +140,8 @@ if __name__ == "__main__":
 
     tf.reset_default_graph()
     saver = tf.train.import_meta_graph("/model/model.ckpt.meta")
-    init_op = tf.global_variables_initializer()
 
     with tf.Session() as sess:
-        sess.run(init_op)
         saver.restore(sess,  tf.train.latest_checkpoint('/model/'))
         graph = tf.get_default_graph()
         theta1 = graph.get_tensor_by_name("theta1:0")
@@ -160,15 +157,23 @@ if __name__ == "__main__":
             'b1': tf.Variable(b1),
             'out': tf.Variable(b2)
         }
+        
+        init_op = tf.global_variables_initializer()
+        init_l = tf.local_variables_initializer()
+        sess.run(init_op)
+        sess.run(init_l)
+        print("Model restored.")
 
-        print("Model restored.") 
+        # Fun with prediction:
         for i in mixed_indices:
             Xi = np.array(X[i][:]).reshape(1, 400)
             logits = neural_net(np.float32(Xi), weights, biases)
             prediction = tf.nn.softmax(logits)
             correct_pred = tf.argmax(prediction, 1)
-            print(correct_pred.eval(sess))
+            predicted = sess.run(correct_pred)
             correct = y[i]
-            break
-    #     display_image(prep_data_to_disp(X[i]), img_title(correct, predicted))
+            print("Predicted: %d" % predicted)
+            print("Correct: %d" % correct)
+            
+            display_image(prep_data_to_disp(X[i]), img_title(correct, predicted[0]))
 
