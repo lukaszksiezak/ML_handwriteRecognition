@@ -102,7 +102,7 @@ def img_title(correct_val, pred_val):
     if correct_val == 10:
         correct_val = 0
 
-    return "Correct val:%s; Predicted val:%s" % (correct_val, pred_val)
+    return "Correct val:%s; Predicted val:%s" % (correct_val, pred_val[0])
 
 
 def display_image(data, title):
@@ -127,14 +127,14 @@ if __name__ == "__main__":
 
     # split test data into training & test set
     X_train, X_test, y_train, _y_test = train_test_split(
-        X, y, test_size=0.2, random_state=1)
+        X, y, test_size=0.2)
 
     y_test = np.zeros((1000, 10), dtype=int)
     for i in range(0, len(y_test)):
         y_test[i] = _prepare_test_labels(_y_test[i][0])
 
     mixed_indices = np.random.permutation(len(X))
-    number_of_batches = 4000  # 60% of total (5000)
+    number_of_batches = 4000  # 80% of total (5000)
     model = learn_nn_network(
         X_train, X_test, y_train, y_test, number_of_batches)
 
@@ -172,8 +172,7 @@ if __name__ == "__main__":
             correct_pred = tf.argmax(prediction, 1)
             predicted = sess.run(correct_pred)
             correct = y[i]
-            print("Predicted: %d" % predicted)
-            print("Correct: %d" % correct)
-            
-            display_image(prep_data_to_disp(X[i]), img_title(correct, predicted[0]))
+
+            display_image(
+                prep_data_to_disp(X[i]), img_title(correct, predicted))
 
